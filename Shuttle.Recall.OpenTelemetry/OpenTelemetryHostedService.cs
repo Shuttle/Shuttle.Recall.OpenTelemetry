@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Trace;
 using Shuttle.Core.Contract;
@@ -6,25 +9,23 @@ using Shuttle.Core.Pipelines;
 
 namespace Shuttle.Recall.OpenTelemetry
 {
-    public class OpenTelemetryModule
+    public class OpenTelemetryHostedService : IHostedService
     {
         private readonly RecallOpenTelemetryOptions _openTelemetryOptions;
 
         private readonly Type _eventProcessingPipelineType = typeof(EventProcessingPipeline);
         private readonly Type _saveEventStreamPipelineType = typeof(SaveEventStreamPipeline);
-        private readonly Type _assembleEventEnvelopePipelineType = typeof(AssembleEventEnvelopePipeline);
 
         private readonly SaveEventStreamPipelineObserver _saveEventStreamPipelineObserver;
         private readonly EventProcessingPipelineObserver _eventProcessingPipelineObserver;
 
-        private readonly Tracer _tracer;
+        private readonly IPipelineFactory _pipelineFactory;
 
-        public OpenTelemetryModule(IOptions<RecallOpenTelemetryOptions> openTelemetryOptions, TracerProvider tracerProvider, IPipelineFactory pipelineFactory)
+        public OpenTelemetryHostedService(IOptions<RecallOpenTelemetryOptions> openTelemetryOptions, TracerProvider tracerProvider, IPipelineFactory pipelineFactory)
         {
             Guard.AgainstNull(openTelemetryOptions, nameof(openTelemetryOptions));
             Guard.AgainstNull(openTelemetryOptions.Value, nameof(openTelemetryOptions.Value));
             Guard.AgainstNull(tracerProvider, nameof(tracerProvider));
-            Guard.AgainstNull(pipelineFactory, nameof(pipelineFactory));
 
             _openTelemetryOptions = openTelemetryOptions.Value;
 
@@ -33,10 +34,12 @@ namespace Shuttle.Recall.OpenTelemetry
                 return;
             }
 
-            _tracer = tracerProvider.GetTracer("Shuttle.Recall");
+            _pipelineFactory = Guard.AgainstNull(pipelineFactory, nameof(pipelineFactory));
 
-            _eventProcessingPipelineObserver = new EventProcessingPipelineObserver(_tracer);
-            _saveEventStreamPipelineObserver = new SaveEventStreamPipelineObserver(_tracer);
+            var tracer = tracerProvider.GetTracer("Shuttle.Recall");
+
+            _eventProcessingPipelineObserver = new EventProcessingPipelineObserver(tracer);
+            _saveEventStreamPipelineObserver = new SaveEventStreamPipelineObserver(tracer);
 
             pipelineFactory.PipelineCreated += PipelineCreated;
         }
@@ -54,6 +57,21 @@ namespace Shuttle.Recall.OpenTelemetry
             {
                 e.Pipeline.RegisterObserver(_saveEventStreamPipelineObserver);
             }
+        }
+
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            await Task.CompletedTask;
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            if (_openTelemetryOptions.Enabled)
+            {
+                _pipelineFactory.PipelineCreated -= PipelineCreated;
+            }
+
+            await Task.CompletedTask;
         }
     }
 }

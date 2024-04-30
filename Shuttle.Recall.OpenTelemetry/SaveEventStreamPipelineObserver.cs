@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Pipelines;
@@ -37,7 +38,7 @@ namespace Shuttle.Recall.OpenTelemetry
 
                 var telemetrySpan = _tracer.StartActiveSpan("OnSavePrimitiveEvents");
 
-                telemetrySpan?.SetAttribute("EventEnvelopeCount", eventEnvelopes.Count());
+                telemetrySpan.SetAttribute("EventEnvelopeCount", eventEnvelopes.Count());
 
                 state.SetTelemetrySpan(telemetrySpan);
             }
@@ -45,6 +46,13 @@ namespace Shuttle.Recall.OpenTelemetry
             {
                 // ignored
             }
+        }
+
+        public async Task ExecuteAsync(OnAfterAssembleEventEnvelopes pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
         }
 
         public void Execute(OnAfterCommitEventStream pipelineEvent)
@@ -64,6 +72,13 @@ namespace Shuttle.Recall.OpenTelemetry
             }
         }
 
+        public async Task ExecuteAsync(OnAfterCommitEventStream pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
+        }
+
         public void Execute(OnAfterSavePrimitiveEvents pipelineEvent)
         {
             Guard.AgainstNull(pipelineEvent, nameof(pipelineEvent));
@@ -79,6 +94,13 @@ namespace Shuttle.Recall.OpenTelemetry
             {
                 // ignored
             }
+        }
+
+        public async Task ExecuteAsync(OnAfterSavePrimitiveEvents pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
         }
 
         public void Execute(OnPipelineException pipelineEvent)
@@ -103,6 +125,13 @@ namespace Shuttle.Recall.OpenTelemetry
             }
         }
 
+        public async Task ExecuteAsync(OnPipelineException pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
+        }
+
         public void Execute(OnPipelineStarting pipelineEvent)
         {
             Guard.AgainstNull(pipelineEvent, nameof(pipelineEvent));
@@ -118,6 +147,13 @@ namespace Shuttle.Recall.OpenTelemetry
             {
                 // ignored
             }
+        }
+
+        public async Task ExecuteAsync(OnPipelineStarting pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
         }
     }
 }

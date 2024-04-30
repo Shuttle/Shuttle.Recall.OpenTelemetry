@@ -26,7 +26,7 @@ namespace Shuttle.Recall.OpenTelemetry
                     options.IncludeSerializedMessage = openTelemetryBuilder.Options.IncludeSerializedMessage;
                 });
 
-                services.AddPipelineModule<OpenTelemetryModule>();
+                services.AddHostedService<OpenTelemetryHostedService>();
             });
 
             return tracerProviderBuilder;

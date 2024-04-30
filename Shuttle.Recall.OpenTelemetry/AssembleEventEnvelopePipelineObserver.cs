@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
@@ -92,6 +93,13 @@ namespace Shuttle.Esb.OpenTelemetry
             }
         }
 
+        public async Task ExecuteAsync(OnAfterAssembleEventEnvelope pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
+        }
+
         public void Execute(OnAfterSerializeEvent pipelineEvent)
         {
             Guard.AgainstNull(pipelineEvent, nameof(pipelineEvent));
@@ -117,6 +125,13 @@ namespace Shuttle.Esb.OpenTelemetry
             }
         }
 
+        public async Task ExecuteAsync(OnAfterSerializeEvent pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
+        }
+
         public void Execute(OnAfterCompressEvent pipelineEvent)
         {
             Guard.AgainstNull(pipelineEvent, nameof(pipelineEvent));
@@ -136,6 +151,13 @@ namespace Shuttle.Esb.OpenTelemetry
             }
         }
 
+        public async Task ExecuteAsync(OnAfterCompressEvent pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
+        }
+
         public void Execute(OnAfterEncryptEvent pipelineEvent)
         {
             Guard.AgainstNull(pipelineEvent, nameof(pipelineEvent));
@@ -153,6 +175,13 @@ namespace Shuttle.Esb.OpenTelemetry
             {
                 // ignored
             }
+        }
+
+        public async Task ExecuteAsync(OnAfterEncryptEvent pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
         }
 
         public void Execute(OnPipelineException pipelineEvent)
@@ -175,6 +204,13 @@ namespace Shuttle.Esb.OpenTelemetry
             {
                 // ignored
             }
+        }
+
+        public async Task ExecuteAsync(OnPipelineException pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
         }
     }
 }

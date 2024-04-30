@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using System.Web;
 using Shuttle.Esb.OpenTelemetry;
 
@@ -54,6 +55,13 @@ namespace Shuttle.Recall.OpenTelemetry
             }
         }
 
+        public async Task ExecuteAsync(OnPipelineException pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
+        }
+
         public void Execute(OnAfterGetProjectionEvent pipelineEvent)
         {
             Guard.AgainstNull(pipelineEvent, nameof(pipelineEvent));
@@ -73,7 +81,7 @@ namespace Shuttle.Recall.OpenTelemetry
                     state.GetTelemetrySpan()?.SetAttribute("PrimitiveEvent.EventId", projectionEvent.PrimitiveEvent.EventId.ToString());
                     state.GetTelemetrySpan()?.SetAttribute("PrimitiveEvent.EventType", projectionEvent.PrimitiveEvent.EventType);
                     state.GetTelemetrySpan()?.SetAttribute("PrimitiveEvent.IsSnapshot", projectionEvent.PrimitiveEvent.IsSnapshot);
-                    state.GetTelemetrySpan()?.SetAttribute("PrimitiveEvent.IVersiond", projectionEvent.PrimitiveEvent.Version);
+                    state.GetTelemetrySpan()?.SetAttribute("PrimitiveEvent.Version", projectionEvent.PrimitiveEvent.Version);
                     state.GetTelemetrySpan()?.SetAttribute("PrimitiveEvent.DateRegistered", projectionEvent.PrimitiveEvent.DateRegistered.ToString("O"));
                     state.GetTelemetrySpan()?.Dispose();
                     state.SetTelemetrySpan(_tracer.StartActiveSpan("OnGetProjectionEventEnvelope"));
@@ -85,6 +93,13 @@ namespace Shuttle.Recall.OpenTelemetry
             }
         }
 
+        public async Task ExecuteAsync(OnAfterGetProjectionEvent pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
+        }
+
         public void Execute(OnPipelineStarting pipelineEvent)
         {
             Guard.AgainstNull(pipelineEvent, nameof(pipelineEvent));
@@ -93,8 +108,8 @@ namespace Shuttle.Recall.OpenTelemetry
             {
                 var telemetrySpan = _tracer.StartActiveSpan(EventProcessingPipelineName);
 
-                telemetrySpan?.SetAttribute("MachineName", Environment.MachineName);
-                telemetrySpan?.SetAttribute("BaseDirectory", AppDomain.CurrentDomain.BaseDirectory);
+                telemetrySpan.SetAttribute("MachineName", Environment.MachineName);
+                telemetrySpan.SetAttribute("BaseDirectory", AppDomain.CurrentDomain.BaseDirectory);
 
                 pipelineEvent.Pipeline.State.SetPipelineTelemetrySpan(telemetrySpan);
             }
@@ -102,6 +117,13 @@ namespace Shuttle.Recall.OpenTelemetry
             {
                 // ignored
             }
+        }
+
+        public async Task ExecuteAsync(OnPipelineStarting pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
         }
 
         public void Execute(OnAfterGetProjectionEventEnvelope pipelineEvent)
@@ -156,8 +178,8 @@ namespace Shuttle.Recall.OpenTelemetry
                     }
                 }
 
-                telemetrySpan?.SetAttribute("EventId", eventEnvelope.EventId.ToString());
-                telemetrySpan?.SetAttribute("EventType", eventEnvelope.EventType);
+                telemetrySpan.SetAttribute("EventId", eventEnvelope.EventId.ToString());
+                telemetrySpan.SetAttribute("EventType", eventEnvelope.EventType);
 
                 state.SetTelemetrySpan(telemetrySpan);
             }
@@ -165,6 +187,13 @@ namespace Shuttle.Recall.OpenTelemetry
             {
                 // ignored
             }
+        }
+
+        public async Task ExecuteAsync(OnAfterGetProjectionEventEnvelope pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
         }
 
         public void Execute(OnAfterProcessEvent pipelineEvent)
@@ -197,6 +226,13 @@ namespace Shuttle.Recall.OpenTelemetry
             }
         }
 
+        public async Task ExecuteAsync(OnAfterProcessEvent pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
+        }
+
         public void Execute(OnAfterAcknowledgeEvent pipelineEvent)
         {
             Guard.AgainstNull(pipelineEvent, nameof(pipelineEvent));
@@ -224,6 +260,13 @@ namespace Shuttle.Recall.OpenTelemetry
             }
         }
 
+        public async Task ExecuteAsync(OnAfterAcknowledgeEvent pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
+        }
+
         public void Execute(OnAfterStartTransactionScope pipelineEvent)
         {
             Guard.AgainstNull(pipelineEvent, nameof(pipelineEvent));
@@ -236,6 +279,13 @@ namespace Shuttle.Recall.OpenTelemetry
             {
                 // ignored
             }
+        }
+
+        public async Task ExecuteAsync(OnAfterStartTransactionScope pipelineEvent)
+        {
+            Execute(pipelineEvent);
+
+            await Task.CompletedTask;
         }
     }
 }

@@ -2,7 +2,6 @@
 using OpenTelemetry.Trace;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Pipelines;
-using Shuttle.Core.PipelineTransaction;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,7 +14,6 @@ namespace Shuttle.Recall.OpenTelemetry
 {
     public class EventProcessingPipelineObserver :
         IPipelineObserver<OnPipelineStarting>,
-        IPipelineObserver<OnAfterStartTransactionScope>,
         IPipelineObserver<OnPipelineException>,
         IPipelineObserver<OnAfterGetProjectionEvent>,
         IPipelineObserver<OnAfterGetProjectionEventEnvelope>,
@@ -261,27 +259,6 @@ namespace Shuttle.Recall.OpenTelemetry
         }
 
         public async Task ExecuteAsync(OnAfterAcknowledgeEvent pipelineEvent)
-        {
-            Execute(pipelineEvent);
-
-            await Task.CompletedTask;
-        }
-
-        public void Execute(OnAfterStartTransactionScope pipelineEvent)
-        {
-            Guard.AgainstNull(pipelineEvent, nameof(pipelineEvent));
-
-            try
-            {
-                pipelineEvent.Pipeline.State.SetTelemetrySpan(_tracer.StartActiveSpan("OnGetProjectionEvent"));
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        public async Task ExecuteAsync(OnAfterStartTransactionScope pipelineEvent)
         {
             Execute(pipelineEvent);
 

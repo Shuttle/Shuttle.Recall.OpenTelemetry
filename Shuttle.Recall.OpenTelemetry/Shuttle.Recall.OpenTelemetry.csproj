@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTelemetry" Version="1.8.1" />
-    <PackageReference Include="Shuttle.Recall" Version="17.0.1" />
+    <PackageReference Include="OpenTelemetry" Version="1.9.0" />
+    <PackageReference Include="Shuttle.Recall" Version="18.0.0" />
   </ItemGroup>
 
   <ItemGroup>

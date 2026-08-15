@@ -21,7 +21,7 @@ services.AddPipelines()
     .AddOpenTelemetry();
 ```
 
-`RecallBuilder.AddOpenTelemetry()` subscribes to `EventEnvelopeAssembled`, `EventEnvelopeDeserialized`, `EventHandled` and `Operation` on `RecallOptions`, recording metrics and tracing against sources named `Shuttle.Recall`.
+`RecallBuilder.AddOpenTelemetry()` subscribes to `EventStore.PrimitiveEventsSaved`, `EventProcessing.EventHandled`, and `Operation` on `RecallOptions`, recording metrics and tracing against sources named `Shuttle.Recall`.
 
 The instrumentation is built on `System.Diagnostics.ActivitySource` / `System.Diagnostics.Metrics.Meter` directly, so this package has no dependency on the `OpenTelemetry` SDK — it only becomes "live" once something subscribes to those names, for example:
 
@@ -37,23 +37,21 @@ services.AddOpenTelemetry()
 
 | Name | Instrument | Unit | Description |
 | --- | --- | --- | --- |
-| `recall.event_envelopes.assembled` | Counter | `{envelope}` | Number of event envelopes assembled, ready to be persisted. |
-| `recall.event_envelopes.deserialized` | Counter | `{envelope}` | Number of stored event envelopes deserialized. |
-| `recall.events.handled` | Counter | `{event}` | Number of events successfully handled by a projection. |
+| `recall.primitive_events.saved` | Counter | `{event}` | Number of primitive events saved to the event store, tagged `recall.event.type`. |
+| `recall.events.handled` | Counter | `{event}` | Number of events successfully handled by a projection, tagged `recall.event.type` and `recall.projection.name`. |
 | `recall.operations` | Counter | `{operation}` | Number of Shuttle.Recall infrastructure operations (event store, event processing, storage), tagged `recall.operation`. |
-
-Event-scoped counters carry a `recall.event.type` tag; `recall.events.handled` additionally carries `recall.projection.name`.
 
 ## Tracing
 
 Tracing here is scoped to the event itself, not the pipelines that carry it — pair with `Shuttle.Pipelines.OpenTelemetry` if you also want pipeline-execution spans.
 
-- **Save** – once an event envelope has been assembled, the current trace context (`traceparent` / `tracestate`) and any `Activity.Current` baggage are written to `EventEnvelope.Headers`, using the same header names the W3C Trace Context and Baggage specifications use for HTTP.
-- **Process** – once a projection has finished handling an event, those headers are extracted and used as the parent for a new `Activity` named after the event type, covering the handling of that one event. It is tagged with `recall.id` (the aggregate id), `recall.event.id`, `recall.event.type`, `recall.event.version`, `recall.projection.name` and `recall.projection.sequence_number`.
+- **Process** – once a projection has finished handling an event, `EventEnvelope.Headers` are extracted (via `TraceContext.ExtractContext`/`ExtractBaggage`) and used as the parent for a new `Activity` named after the event type, covering the handling of that one event. It is tagged with `recall.id` (the aggregate id), `recall.event.id`, `recall.event.type`, `recall.event.version`, `recall.projection.name` and `recall.projection.sequence_number`.
 
 This span is deliberately opened and closed within the `EventHandled` handler rather than spanning from when the envelope was deserialized: deserialization also happens during plain aggregate replay (`EventStore.GetAsync`), which has no matching "handled" checkpoint to close a longer-lived span against.
+
+This package does not itself write trace context into `EventEnvelope.Headers` when an event is saved — there is currently no "Save"-side span or automatic context propagation. `TraceContext.Inject` is exposed as an extension point (see below) if you want to propagate context yourself, e.g. from a custom pipeline observer that runs on save.
 
 ## Extension points
 
 - `RecallTelemetry.ActivitySource` / `RecallTelemetry.Meter` – the shared instances used throughout; exposed so you can add your own spans or measurements under the same names.
-- `TraceContext.Inject` / `TraceContext.ExtractContext` / `TraceContext.ExtractBaggage` – the W3C header propagation helpers, exposed for use outside the standard pipeline hooks.
+- `TraceContext.Inject` / `TraceContext.ExtractContext` / `TraceContext.ExtractBaggage` – W3C trace-context/baggage header helpers (`traceparent`/`tracestate`/`baggage`) for reading or writing `EventEnvelope.Headers` yourself. Only `ExtractContext`/`ExtractBaggage` are currently used by this package (on the processing side); `Inject` is unused internally and provided purely as a building block.
